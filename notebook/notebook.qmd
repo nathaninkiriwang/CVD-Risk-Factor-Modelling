@@ -1,0 +1,1321 @@
+---
+title: "![](title.gif)"
+author: "![](https://courseseeker.edu.au/assets/images/institutions/3040.png){width=15%} |"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+toc-title: Contents
+toc: true
+toc_float: true
+toc-location: right
+self-contained: true
+format: 
+  html:
+    toc-title: Contents
+    page-layout: full
+    toc: true
+    toc_float: true
+    toc-location: right
+    theme: united
+    anchor-sections: true
+    code-tools: true
+    code-fold: show
+    source: true
+    code-copy: hover
+    df-print: paged
+    smooth-scroll: true
+    html-math-method: katex
+    self-contained: true
+    self-contained-math: true
+    code-link: true
+execute:
+  warning: false
+editor_options: 
+  chunk_output_type: inline
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+::: panel-tabset
+
+```{r setup, include=FALSE}
+# Default knitting options
+knitr::opts_chunk$set(echo=TRUE, # Echo the code
+                      tidy=TRUE, # Nicely tidy up code
+                      warning=FALSE, # No warnings please 
+                      message=FALSE) # No messages please
+
+options(warn=-1) 
+
+# Suppress start up warnings when loading libraries
+library <- function(...) {
+  suppressPackageStartupMessages(base::library(...))
+}
+```
+
+```{r libraries, include=FALSE}
+# Load in all libraries
+library(tidyverse)
+library(here)      # directory referencing
+library(readxl)    # reading Excel files
+library(janitor)   # data cleaning 
+library(stringr)   # string manimpuation
+library(tidyr)     # new tidy functions
+library(caret)
+library(lme4)
+```
+
+# Data Import
+
+![](8.gif)
+
+```{r}
+load('data/special_biom.RData')
+load('data/types_biom.RData')
+```
+
+
+## Required Variables and Datasets for Research Question 01
+
+```{r}
+
+dataset_names <- c("AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", 
+                   "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bbi", 
+                   "AHSnhs11bbi", "AHSnhs11bbi", "AHSnhs11bbi", "AHSnhs11bbi", 
+                   "AHSnhs11bbi", "AHSnhs11bmd", "AHSnhs11bmd", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp")
+
+variable_names <- c("COBCODBC", "YOABC", "AGEB", "BMISC", "SYSTOL", "DIASTOL", 
+                    "SEX", "CHOLRESB", "HDLCHREB", "LDLRESB", "CHOLNTR", 
+                    "HDLCHSEX", "DIABPRVE", "ATCCURFB", "INSFLAG", "CARDASP", "DIABMQ01", "DIETQ8", "DIETQ5", "DIETQ12", "DIETQ14", "SALTACI", "SALTATI", "MILKFATU", "DIETRDI", "DIETQ1")
+
+variable_descriptions <- c("Country of birth", "Year of arrival in Australia", "Age of person", 
+                           "Body Mass Index (BMI) - score measured", "Systolic Blood Pressure (mmHg)", 
+                           "Diastolic Blood Pressure (mmHg)", "Sex of person", 
+                           "Total cholesterol - ranged (mmol/L)", "HDL cholesterol - ranged (mmol/L)", 
+                           "Fasting LDL cholesterol - ranged (mmol/L)", "Total cholesterol status (mmol/L)", 
+                           "HDL cholesterol status - sex dependent (mmol/L)", 
+                           "Diabetes prevalence - HbA1c (%)", "Type of medication taken in last 2 weeks (code)", 
+                           "Whether insulin used daily", "Whether uses aspirin daily for heart or circulatory condition" , "Currently having insulin every day", "Usual daily serves of fruit", "Usual daily serves of vegetables", "How often salt is used in household for cooking or preparing food", "How often salt is added to food at table", "Whether salt used in cooking or preparing food is iodised", "Whether salt added to meal at table is iodised" ,"Fat content of main type of milk usually consumed", "Whether vegetable and fruit consumption met recommended guidelines", "Main type of milk usually consumed")
+
+variable_df1 <- data.frame(Dataset = dataset_names, Variable_Name = variable_names, Variable_Description = variable_descriptions)
+variable_df1
+```
+
+
+
+## Required Variables and Datasets for Research Question 02
+
+```{r}
+dataset_names <- c(
+  "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", 
+  "AHSnhs11bbi", 
+  "AHSnhs11bmd", "AHSnhs11bmd", 
+  "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", 
+  "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp",
+  "AHSnhs11bsp", "AHSnhs11bsp", "AHSnhs11bsp", 
+"AHSnhs11bsp"
+)
+variable_names <- c(
+  "COBCODBC", "YOABC", "AGEB", "BMISC", "SYSTOL", "DIASTOL", "SEX", "DIABPRVE", 
+  "ATCCURFB", "INSFLAG", "CARDASP", "SMKSTAT", "ALCUSUQ2", "TOTPAC", "ALCSTR01", 
+ "ALCWKLY", "PHDKGW2", "ALINTWK", "EXREGUIC", "EXREGUID", "EXFSRMNE", 
+  "EXLWMBC", "EXLWVBC",
+  "DIETRDI"
+)
+
+variable_descriptions <- c(
+  "Country of birth", "Year of arrival in Australia", "Age of person", "Body Mass Index (BMI) - score measured", 
+  "Systolic Blood Pressure (mmHg)", "Diastolic Blood Pressure (mmHg)", "Sex of person", "Diabetes prevalence - HbA1c (%)", 
+  "Type of medication taken in last 2 weeks (code)", "Whether insulin used daily", "Whether uses aspirin daily for heart or circulatory condition", 
+  "Smoker status", "Frequency of alcohol consumption in the last 12 months", "Mls of pure alcohol consumed", "Short term alcohol risk (2001 Guidelines)", "Estimated total weekly consumption (in mls)", "Measured weight (kg)", "Average daily intake over week (in mls)", 
+  "Whether exercise last week met 150 minutes recommended guidelines", "Whether exercise last week met 150 minutes and 5 sessions recommended guidelines", 
+  "Total minutes walked for fitness, recreation or sport in last week", "Total minutes undertaken moderate exercise in last week", 
+  "Total minutes undertaken vigorous exercise last week", 
+  "Whether vegetable and fruit consumption met recommended guidelines"
+)
+
+variable_df2 <- data.frame(Dataset = dataset_names, Variable_Name = variable_names, Variable_Description = variable_descriptions)
+variable_df2
+```
+
+
+## Confounding Variables
+
+The following represents the confounding medication variables that we will need to look at further. All individuals who are taking the following medication will be excluded from the analysis
+
+- CARDASP: Whether uses aspirin daily for heart or circulatory condition (medication for hypertension)
+0. Not applicable                                                     
+1. Aspirin used daily for heart or circulatory condition              
+5. Aspirin not used daily for heart or circulatory condition          
+6. Don't know if aspirin used daily for heart or circulatory condition
+8. Not stated if aspirin used daily for heart or circulatory condition
+
+- DIABMQ01: Currently having insulin every day
+0. Not applicable
+1. Currently having insulin every day
+5. Not currently having insulin every day
+6. Don't know if currently having insulin every day
+
+- ATCCURFB: Medication
+B01 17430. ANTITHROMBOTIC AGENTS
+B06 20190. OTHER HEMATOLOGICAL AGENTS
+C01 20370. CARDIAC THERAPY
+C02 21950. ANTIHYPERTENSIVES
+C03 23030. DIURETICS
+C04 24020. PERIPHERAL VASODILATORS
+C05 24460. VASOPROTECTIVES
+C07 25090. BETA BLOCKING AGENTS
+C08 25910. CALCIUM CHANNEL BLOCKERS
+C09 26300. AGENTS ACTING ON THE RENIN-ANGIOTENSIN SYSTEM
+C10 27090. LIPID MODIFYING AGENTS 
+
+
+
+```{r}
+raw_AHSnhs11bsp <- read_csv("data/AHSnhs11bsp.csv")
+raw_AHSnhs11bbi <- read_csv("data/AHSnhs11bbi.csv")
+raw_AHSnhs11bmd <- read_csv("data/AHSnhs11bmd.csv")
+
+raw_AHSnhs11bsp$ID <- paste(raw_AHSnhs11bsp$ABSLID, raw_AHSnhs11bsp$ABSPID, sep = "-")
+raw_AHSnhs11bbi$ID <- paste(raw_AHSnhs11bbi$ABSLID, raw_AHSnhs11bbi$ABSPID, sep = "-")
+raw_AHSnhs11bmd$ID <- paste(raw_AHSnhs11bmd$ABSLID, raw_AHSnhs11bmd$ABSPID, sep = "-")
+
+```
+
+
+# Data Cleaning
+![](9.gif)
+
+## Variable Selection
+
+We perform separate variable filtering for each question in order to retain as many observations as possible during the cleaning process.
+
+### Research Question 1
+
+The following code gets pulls the variables as defined in the Data Import section.
+
+```{r}
+df1 <- raw_AHSnhs11bsp[, c('ID', variable_df1 |> filter(Dataset == 'AHSnhs11bsp') |> pull(Variable_Name))]
+df2<- raw_AHSnhs11bbi[, c('ID', variable_df1 |> filter(Dataset == 'AHSnhs11bbi') |> pull(Variable_Name))]
+df3<- raw_AHSnhs11bmd[, c('ID', variable_df1 |> filter(Dataset == 'AHSnhs11bmd') |> pull(Variable_Name))]
+df_q1 <- df1 |> 
+  full_join(df2, by = "ID") |> 
+  full_join(df3, by = "ID")
+
+df_q1 <- as.data.frame(df_q1)
+```
+
+
+### Research Question 2
+
+```{r}
+df1 <- raw_AHSnhs11bsp[, c('ID', variable_df2 |> filter(Dataset == 'AHSnhs11bsp') |> pull(Variable_Name))]
+df2<- raw_AHSnhs11bbi[, c('ID', variable_df2 |> filter(Dataset == 'AHSnhs11bbi') |> pull(Variable_Name))]
+df3<- raw_AHSnhs11bmd[, c('ID', variable_df2 |> filter(Dataset == 'AHSnhs11bmd') |> pull(Variable_Name))]
+df_q2 <- df1 |> 
+  full_join(df2, by = "ID") |> 
+  full_join(df3, by = "ID")
+
+df_q2 <- as.data.frame(df_q2)
+```
+
+## Variable Type
+
+The following lines of code converts the variables to the correct type.
+
+### Question 01
+
+```{r}
+for (i in 1:nrow(types_biom)) {
+  var_name <- types_biom$variable_name[i]
+  var_type <- types_biom$variable_type[i]
+  
+  if (var_name %in% colnames(df_q1)) {
+    if (var_type == 'string') {
+      df_q1[[var_name]] <- as.character(df_q1[[var_name]])
+    } else if (var_type == 'numeric') {
+      df_q1[[var_name]] <- as.numeric(df_q1[[var_name]])
+    } else if (var_type == 'categorical') {
+      df_q1[[var_name]] <- as.factor(df_q1[[var_name]])
+    }
+  }
+}
+```
+
+```{r}
+df_q1[, c("COBCODBC", "YOABC", "CARDASP", "HDLCHSEX", "DIABPRVE", "INSFLAG")] <- lapply(df_q1[, c("COBCODBC", "YOABC", "CARDASP", "HDLCHSEX", "DIABPRVE", "INSFLAG")], as.factor)
+```
+
+
+
+### Question 02
+
+```{r}
+for (i in 1:nrow(types_biom)) {
+  var_name <- types_biom$variable_name[i]
+  var_type <- types_biom$variable_type[i]
+  
+  if (var_name %in% colnames(df_q2)) {
+    if (var_type == 'string') {
+      df_q2[[var_name]] <- as.character(df_q2[[var_name]])
+    } else if (var_type == 'numeric') {
+      df_q2[[var_name]] <- as.numeric(df_q2[[var_name]])
+    } else if (var_type == 'categorical') {
+      df_q2[[var_name]] <- as.factor(df_q2[[var_name]])
+    }
+  }
+}
+```
+
+```{r}
+df_q2[, c("COBCODBC", "YOABC", "CARDASP", "SMKSTAT", "ALCUSUQ2", "ALCSTR01", "EXREGUIC", "EXREGUID", "DIETRDI", "DIABPRVE", "ATCCURFB", "INSFLAG")] <- lapply(df_q2[, c("COBCODBC", "YOABC", "CARDASP", "SMKSTAT", "ALCUSUQ2", "ALCSTR01", "EXREGUIC", "EXREGUID", "DIETRDI", "DIABPRVE", "ATCCURFB", "INSFLAG")], as.factor)
+
+```
+
+
+## Missing Values
+
+The following code deals with implicit missing values
+
+```{r}
+miss_defs <- c("measurement not taken - equipment faulty",
+               "measurement not taken - other reason",
+               "measurement not taken - refusal",
+               "not collected",
+               "not applicable",
+               "not determined",
+               "not known",
+               "not known if currently on a diet",
+               "not measured",
+               "not reported",
+               "not stated",
+               "not used",
+               "not taken",
+               "not recorded",
+               "no answer",
+               "not stated",
+               "valid reading not obtained",
+               "not obtained")
+
+
+raw_to_tech <- function(proc, special, types)
+{
+  var_names <- colnames(proc)
+  for (j in 1:length(var_names)) 
+  {
+    var_val <- var_names[j]
+    specials <- special %>%
+      filter(variable_name==var_val)
+    if (nrow(specials)>0) 
+    {
+      ind <- which(var_names==var_val)
+      var_miss_str  <- paste0(var_val,"_MISS")
+      var_miss_reas <- rep("observed",nrow(proc))
+      var_vals      <- proc[,ind]
+      var_type <- types %>% 
+        filter(variable_name==var_val) %>%
+        select(variable_type) %>%
+        as.character()
+      if (var_type=="numeric") {
+        for (i in 1:length(var_vals)) {
+          specials <- specials %>% filter(str_detect(meaning, paste(miss_defs, collapse = "|")))
+          if (var_vals[i] %in% specials$value) {
+            ind2 <- which(var_vals[i]==specials$value)
+            var_vals[i]      <- NA
+            var_miss_reas[i] <- specials[ind2,3] %>% as.character()
+          }
+        }
+      }
+      if (var_type=="categorical") {
+        for (i in 1:length(var_vals)) {
+          spec_val  <- specials$value
+          spec_meam <- specials$meaning
+          if (var_vals[i] %in% spec_val) 
+          {
+            var_mean <- spec_meam[var_vals[i] == spec_val]
+            if (var_mean %in% miss_defs) {
+              var_vals[i]      <- NA
+              var_miss_reas[i] <- var_mean
+            }
+          } else {
+            var_vals[i]      <- NA
+            var_miss_reas[i] <- "unknown"
+          }
+        }
+      }
+      if (any(is.na(var_vals))) {
+        proc[,ind] <- var_vals
+        proc$dummy <- var_miss_reas
+        colnames(proc)[ncol(proc)] <- var_miss_str
+      }
+    }
+  }
+  return(proc)
+}
+
+
+tech_q1 <- raw_to_tech(df_q1, special_biom, types_biom)
+tech_q2 <- raw_to_tech(df_q2, special_biom, types_biom)
+```
+
+
+
+The following code is to further clean any and all values above 9995 and assign them `NA` values.
+
+```{r}
+update_large_values <- function(data, threshold = 9995, reason = "Missing due to unknown reasons") {
+  numeric_cols <- colnames(data)[sapply(data, is.numeric)]
+  
+  for (col in numeric_cols) {
+    # Set specific thresholds for columns
+    col_threshold <- if (col == "ATCCURFB") {
+      99995
+    } else if (col == "PHDKGW2") {
+      995
+    } else {
+      threshold
+    }
+    
+    miss_column <- paste0(col, "_MISS")
+    
+    if (!miss_column %in% colnames(data)) {
+      data[[miss_column]] <- "observed"
+    }
+    
+    # Update values based on the threshold
+    data[[miss_column]][data[[col]] > col_threshold] <- reason
+    data[[col]] <- ifelse(data[[col]] > col_threshold, NA, data[[col]])
+
+    # Special case for PHDKGW2: change 0 values to NA
+    if (col == "PHDKGW2") {
+      data[[col]] <- ifelse(data[[col]] == 0, NA, data[[col]])
+    }
+  }
+  
+  return(data)
+}
+
+tech_q1 <- update_large_values(tech_q1)
+tech_q2 <- update_large_values(tech_q2)
+
+```
+
+
+### Visualising Missing Values
+
+
+```{r}
+g <- tech_q2 %>%
+keep(is.numeric) %>%
+gather() %>%
+ggplot(aes(value)) +
+facet_wrap(~ key, scales = "free") +
+geom_histogram() + theme_bw() + ggtitle('Histogram of Numeric Variables')
+g
+```
+
+Data looks technically correct now, without substantial or significant missing values that stand out.
+
+
+
+# RQ 1
+![](10.gif)
+
+## Preparation
+
+The following are the given categorical bins for LDL and HDL variables.
+
+HDLCHREB	HDL cholesterol - ranged (mmol/L)
+1. Less than 1.0
+2. 1.0 to less than 1.3
+3. 1.3 to less than 1.5
+4. 1.5 to less than 2.0
+5. 2.0 to less than 2.5
+6. 2.5 or more
+7. Not applicable
+8. Not reported
+
+
+LDLRESB	Fasting LDL cholesterol - ranged (mmol/L)
+	01. Less than 1.5
+	02. 1.5 to less than 2.0
+	03. 2.0 to less than 2.5
+	04. 2.5 to less than 3.0
+	05. 3.0 to less than 3.5
+	06. 3.5 to less than 4.0
+	07. 4.0 to less than 4.5
+	08. 4.5 or more
+	97. Not applicable
+	98. Not reported 
+	
+	
+Using this, we will convert this categorical and right censored data to numeric with the following code.
+
+
+
+###	HDL cholesterol (HDLCHREB)
+
+The following code uses the `fitdistrplus` to perform conversion from categorical to numerical given the bins and sample sizes of each gender and measure found from the published data dictionary. Details on the method can be found in the paper.
+
+```{r}
+library(fitdistrplus)
+
+expected_value_interval_norm <- function(mean, sd, lower, upper) {
+  if (is.infinite(upper)) {
+    upper <- mean + 10 * sd  
+  }
+  numerator <- integrate(function(x) x * dnorm(x, mean, sd), lower, upper)$value
+  denominator <- pnorm(upper, mean, sd) - pnorm(lower, mean, sd)
+  expected_value <- numerator / denominator
+  return(expected_value)
+}
+
+hdl_male <- data.frame(
+  Range = c("<1.0", "1.0-1.3", "1.3-1.5", "1.5-2.0", "2.0-2.5", "≥2.5"),
+  Lower = c(0, 1.0, 1.3, 1.5, 2.0, 2.5),
+  Upper = c(1.0, 1.3, 1.5, 2.0, 2.5, 3.5),
+  Count = c(1591.6, 3468.8, 1774.9, 1327.0, 125.4, 22.5)
+)
+hdl_male$Count <- round(hdl_male$Count * 1000)
+
+hdl_male_cens <- data.frame(
+  left = hdl_male$Lower,
+  right = hdl_male$Upper,
+  count = hdl_male$Count
+)
+hdl_male_cens_expanded <- hdl_male_cens[rep(1:nrow(hdl_male_cens), hdl_male_cens$count), 1:2]
+fit_hdl_male <- fitdistcens(hdl_male_cens_expanded, "norm")
+hdl_male$ExpectedValue <- mapply(
+  expected_value_interval_norm,
+  mean = fit_hdl_male$estimate["mean"],
+  sd = fit_hdl_male$estimate["sd"],
+  lower = hdl_male$Lower,
+  upper = hdl_male$Upper
+)
+
+hdl_female <- data.frame(
+  Range = c("<1.0", "1.0-1.3", "1.3-1.5", "1.5-2.0", "2.0-2.5", "≥2.5"),
+  Lower = c(0, 1.0, 1.3, 1.5, 2.0, 2.5),
+  Upper = c(1.0, 1.3, 1.5, 2.0, 2.5, 3.5),
+  Count = c(411.3, 1938.4, 1970.4, 3304.5, 814.3, 72.2)
+)
+hdl_female$Count <- round(hdl_female$Count * 1000)
+
+hdl_female_cens <- data.frame(
+  left = hdl_female$Lower,
+  right = hdl_female$Upper,
+  count = hdl_female$Count
+)
+hdl_female_cens_expanded <- hdl_female_cens[rep(1:nrow(hdl_female_cens), hdl_female_cens$count), 1:2]
+fit_hdl_female <- fitdistcens(hdl_female_cens_expanded, "norm")
+hdl_female$ExpectedValue <- mapply(
+  expected_value_interval_norm,
+  mean = fit_hdl_female$estimate["mean"],
+  sd = fit_hdl_female$estimate["sd"],
+  lower = hdl_female$Lower,
+  upper = hdl_female$Upper
+)
+
+hdl_male$HDL_Category = c(1:6)
+hdl_female$HDL_Category = c(1:6)
+```
+
+
+
+
+The following code plots the empirical vs fitted male HDL distribution.
+
+```{r}
+library(ggplot2)
+
+hdl_male$Proportion <- hdl_male$Count / sum(hdl_male$Count)
+hdl_female$Proportion <- hdl_female$Count / sum(hdl_female$Count)
+max_proportion_female <- max(hdl_female$Proportion)
+max_proportion_male <- max(hdl_male$Proportion)
+
+ggplot(hdl_male, aes(x = ExpectedValue, y = Proportion)) +
+  geom_bar(stat = "identity", fill = "lightblue", alpha = 0.6) +
+  stat_function(fun = function(x) dnorm(x, mean = fit_hdl_male$estimate["mean"], sd = fit_hdl_male$estimate["sd"]) *
+                   max_proportion_male, color = "blue", size = 1) +
+  labs(title = "Empirical vs. Fitted Proportion Distribution of HDL in Males",
+       x = "HDL Level", y = "Proportion") +
+  theme_bw()
+ggplot(hdl_female, aes(x = ExpectedValue, y = Proportion)) +
+  geom_bar(stat = "identity", fill = "pink", alpha = 0.6) +
+  stat_function(fun = function(x) dnorm(x, mean = fit_hdl_female$estimate["mean"], sd = fit_hdl_female$estimate["sd"]) *
+                   max_proportion_female, color = "red", size = 1) +
+  labs(title = "Empirical vs. Fitted Proportion Distribution of HDL in Females",
+       x = "HDL Level", y = "Proportion") +
+  theme_bw()
+hdl_combined <- rbind(
+  transform(hdl_male, Sex = "Male"),
+  transform(hdl_female, Sex = "Female")
+)
+ggplot(hdl_combined, aes(x = HDL_Category, y = ExpectedValue, color = Sex, group = Sex)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(title = "Expected HDL Levels by Category for Males and Females",
+       x = "HDL Category", y = "Expected HDL Level") +
+  theme_minimal() +
+  scale_x_continuous(breaks = 1:6, labels = hdl_male$Range) +
+  theme(legend.position = "top")
+```
+
+
+The following code saves the data.
+
+```{r}
+hdl_male_lookup <- data.frame(
+  HDLCHREB = 1:6,
+  HDL_Expected = hdl_male$ExpectedValue
+)
+
+hdl_female_lookup <- data.frame(
+  HDLCHREB = 1:6,
+  HDL_Expected = hdl_female$ExpectedValue
+)
+
+tech_q1$HDLCHREB <- as.numeric(tech_q1$HDLCHREB)
+
+tech_q1$SEX <- as.character(tech_q1$SEX)
+
+get_hdl_expected <- function(sex, hdlchreb) {
+  if (sex == 2) {
+    return(hdl_female_lookup$HDL_Expected[match(hdlchreb, hdl_female_lookup$HDLCHREB)])
+  } else if (sex == 1) {
+    return(hdl_male_lookup$HDL_Expected[match(hdlchreb, hdl_male_lookup$HDLCHREB)])
+  } else {
+    return(NA)  # Handle cases where SEX is missing or unspecified
+  }
+}
+
+tech_q1$HDL_Expected <- mapply(get_hdl_expected, tech_q1$SEX, tech_q1$HDLCHREB)
+```
+
+
+
+
+
+
+
+###	LDL cholesterol (LDLRESB)
+
+Follows the same description as previous.
+
+
+```{r}
+library(fitdistrplus)
+
+expected_value_interval_norm <- function(mean, sd, lower, upper) {
+  if (is.infinite(upper)) {
+    upper <- mean + 10 * sd  
+  }
+  numerator <- integrate(function(x) x * dnorm(x, mean, sd), lower, upper)$value
+  denominator <- pnorm(upper, mean, sd) - pnorm(lower, mean, sd)
+  expected_value <- numerator / denominator
+  return(expected_value)
+}
+
+ldl_male <- data.frame(
+  Range = c(
+    "<1.5",
+    "1.5-2.0",
+    "2.0-2.5",
+    "2.5-3.0",
+    "3.0-3.5",
+    "3.5-4.0",
+    "4.0-4.5",
+    ">=4.5"
+  ),
+  Lower = c(0.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5),
+  Upper = c(1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 7),
+  Count = c(90.0, 426.5, 851.6, 1395.7, 1447.9, 1129.9, 580.1, 621.8)
+)
+
+
+
+ldl_male$Count <- round(ldl_male$Count * 1000)
+
+ldl_male_cens <- data.frame(
+  left = ldl_male$Lower,
+  right = ldl_male$Upper,
+  count = ldl_male$Count
+)
+ldl_male_cens_expanded <- ldl_male_cens[rep(1:nrow(ldl_male_cens), ldl_male_cens$count), 1:2]
+fit_ldl_male <- fitdistcens(ldl_male_cens_expanded, "norm")
+ldl_male$ExpectedValue <- mapply(
+  expected_value_interval_norm,
+  mean = fit_ldl_male$estimate["mean"],
+  sd = fit_ldl_male$estimate["sd"],
+  lower = ldl_male$Lower,
+  upper = ldl_male$Upper
+)
+
+ldl_female <- data.frame(
+  Range = c(
+    "<1.5",
+    "1.5-2.0",
+    "2.0-2.5",
+    "2.5-3.0",
+    "3.0-3.5",
+    "3.5-4.0",
+    "4.0-4.5",
+    ">=4.5"
+  ),
+  Lower = c(0.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5),
+  Upper = c(1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 7.0),
+  Count = c(92.3, 442.7, 1094.5, 1665.1, 1379.4, 1116.7, 546.5, 501.1)
+)
+
+
+
+ldl_female$Count <- round(ldl_female$Count * 1000)
+
+ldl_female_cens <- data.frame(
+  left = ldl_female$Lower,
+  right = ldl_female$Upper,
+  count = ldl_female$Count
+)
+ldl_female_cens_expanded <- ldl_female_cens[rep(1:nrow(ldl_female_cens), ldl_female_cens$count), 1:2]
+fit_ldl_female <- fitdistcens(ldl_female_cens_expanded, "norm")
+ldl_female$ExpectedValue <- mapply(
+  expected_value_interval_norm,
+  mean = fit_ldl_female$estimate["mean"],
+  sd = fit_ldl_female$estimate["sd"],
+  lower = ldl_female$Lower,
+  upper = ldl_female$Upper
+)
+
+ldl_male$LDL_Category = c(1:8)
+ldl_female$LDL_Category = c(1:8)
+```
+
+
+
+
+```{r}
+ldl_male_lookup <- data.frame(
+  LDLRESB = 1:8,
+  LDL_Expected = ldl_male$ExpectedValue
+)
+
+ldl_female_lookup <- data.frame(
+  LDLRESB = 1:8,
+  LDL_Expected = ldl_female$ExpectedValue
+)
+
+tech_q1$LDLRESB <- as.numeric(tech_q1$LDLRESB)
+
+tech_q1$SEX <- as.character(tech_q1$SEX)
+
+get_ldl_expected <- function(sex, LDLRESB) {
+  if (sex == 2) {
+    return(ldl_female_lookup$LDL_Expected[match(LDLRESB, ldl_female_lookup$LDLRESB)])
+  } else if (sex == 1) {
+    return(ldl_male_lookup$LDL_Expected[match(LDLRESB, ldl_male_lookup$LDLRESB)])
+  } else {
+    return(NA)  # Handle cases where SEX is missing or unspecified
+  }
+}
+
+tech_q1$LDL_Expected <- mapply(get_ldl_expected, tech_q1$SEX, tech_q1$LDLRESB)
+```
+
+
+
+	
+
+```{r}
+ldl_male$Proportion <- ldl_male$Count / sum(ldl_male$Count)
+ldl_female$Proportion <- ldl_female$Count / sum(ldl_female$Count)
+
+max_proportion_male <- max(ldl_male$Proportion)
+max_proportion_female <- max(ldl_female$Proportion)
+
+max_density_male <- dnorm(fit_ldl_male$estimate["mean"], mean = fit_ldl_male$estimate["mean"], sd = fit_ldl_male$estimate["sd"])
+max_density_female <- dnorm(fit_ldl_female$estimate["mean"], mean = fit_ldl_female$estimate["mean"], sd = fit_ldl_female$estimate["sd"])
+
+scale_factor_male <- max_proportion_male / max_density_male
+scale_factor_female <- max_proportion_female / max_density_female
+
+ggplot(ldl_male, aes(x = ExpectedValue, y = Proportion)) +
+  geom_bar(stat = "identity", fill = "lightblue", alpha = 0.6) +
+  stat_function(fun = function(x) dnorm(x, mean = fit_ldl_male$estimate["mean"], sd = fit_ldl_male$estimate["sd"]) *
+                   scale_factor_male, color = "blue", size = 1) +
+  labs(title = "Empirical vs. Fitted Proportion Distribution of LDL in Males",
+       x = "LDL Level", y = "Proportion") +
+  theme_minimal()
+ggplot(ldl_female, aes(x = ExpectedValue, y = Proportion)) +
+  geom_bar(stat = "identity", fill = "pink", alpha = 0.6) +
+  stat_function(fun = function(x) dnorm(x, mean = fit_ldl_female$estimate["mean"], sd = fit_ldl_female$estimate["sd"]) *
+                   scale_factor_female, color = "red", size = 1) +
+  labs(title = "Empirical vs. Fitted Proportion Distribution of LDL in Females",
+       x = "LDL Level", y = "Proportion") +
+  theme_minimal()
+```
+
+```{r}
+ldl_combined <- rbind(
+  transform(ldl_male, Sex = "Male"),
+  transform(ldl_female, Sex = "Female")
+)
+
+ggplot(ldl_combined, aes(x = LDL_Category, y = ExpectedValue, color = Sex, group = Sex)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(title = "Expected LDL Levels by Category for Males and Females",
+       x = "LDL Category", y = "Expected LDL Level") +
+  theme_minimal() +
+  scale_x_continuous(breaks = 1:8, labels = ldl_male$Range) +
+  theme(legend.position = "top")
+```
+
+
+
+
+### Excluding people with medication
+
+```{r}
+non_medication_tech_q1 <- tech_q1 %>%
+  filter(CARDASP != 1,                
+         DIABMQ01 != 1,               
+         !ATCCURFB %in% c(17430, 20190, 20370, 21950, 23030, 24020, 24460, 25090, 25910, 26300, 27090))  
+
+non_medication_tech_q1
+```
+
+### LDL-HDL Ratio
+
+```{r}
+non_medication_tech_q1$LDL_HDL_ratio <- non_medication_tech_q1$LDL_Expected / non_medication_tech_q1$HDL_Expected
+```
+
+### Selecting only required variables
+
+```{r}
+
+final_q1 <- non_medication_tech_q1 |> dplyr::select(LDL_HDL_ratio, ID, COBCODBC, YOABC, AGEB, SYSTOL, DIASTOL, LDL_Expected, DIETQ8, DIETQ5, SALTATI, SALTACI, MILKFATU, DIETRDI, DIETQ1)
+final_q1 <- na.omit(final_q1) |> unique() 
+variable_df1 |> filter(Variable_Name %in%colnames(final_q1)) 
+```
+
+```{r}
+table(final_q1$COBCODBC)
+```
+
+```{r}
+table(final_q1$YOABC)
+```
+
+### Filtering more columns of unknown responses
+
+```{r}
+final_q1 <- final_q1 |> filter(DIETQ5 != 0) |> filter(SALTATI %in% c(1,2,3)) |> filter(SALTACI %in% c(1,2,3))|> filter(! MILKFATU %in% c(0,4))|> filter(! DIETQ1 %in% c(0,6))|> filter(! DIETRDI %in% c(0,3)) |> filter(! DIETQ1  %in% c(3,4)) 
+```
+
+### Regrouping Fruit and Vegetables column 
+
+```{r}
+final_q1 <- final_q1 %>%
+  mutate(DIETQ8 = case_when(
+    DIETQ8 %in% c(7, 8) ~ 0,  
+    TRUE ~ DIETQ8  
+  ))
+
+
+final_q1 <- final_q1 %>%
+  mutate(DIETQ5 = case_when(
+    DIETQ5 %in% c(7, 8) ~ 0,  
+    TRUE ~ DIETQ5  
+  ))
+```
+
+
+## IDA
+
+
+### SALTATI
+
+
+```{r}
+# Define labels for COBCODBC
+labels <- c("Australians", "Main English Speaking Countries", "Other")
+
+# Create the plot with relabeled legend
+ggplot(final_q1, aes(x = SALTATI, y = LDL_Expected, color = COBCODBC, group = COBCODBC)) +
+  stat_summary(fun = "mean", geom = "point", size = 3) +  # Points for means
+  stat_summary(fun = "mean", geom = "line", aes(group = COBCODBC)) +  # Line connecting means
+  labs(title = "Interaction Plot: SALTATI and Absolute LDL by Country of Birth",
+       x = "SALTATI", 
+       y = "Absolute LDL (mmol/L)",
+       color = "Country of Birth") +  # Change legend title
+  scale_color_manual(values = c("lightblue3", "tomato3", "palegreen4"), labels = labels) +
+  theme_bw()
+```
+
+
+```{r}
+# Define labels for COBCODBC
+labels <- c("Australians", "Main English Speaking Countries", "Other")
+
+# Create the plot with relabeled legend
+ggplot(final_q1, aes(x = SALTATI, y = LDL_HDL_ratio, color = COBCODBC, group = COBCODBC)) +
+  stat_summary(fun = "mean", geom = "point", size = 3) +  # Points for means
+  stat_summary(fun = "mean", geom = "line", aes(group = COBCODBC), size = 1) +  # Line connecting means
+  labs(title = "Interaction Plot: SALTATI and LDL/HDL Ratio by Country of Birth",
+       x = "SALTATI", 
+       y = "LDL/HDL Ratio",
+       color = "Country of Birth") +  # Change legend title
+  scale_color_manual(values = c("lightblue3", "tomato3", "palegreen4"), labels = labels) +
+  theme_bw()
+```
+
+
+### SALTACI
+
+```{r}
+table(final_q1$SALTACI , final_q1$COBCODBC )
+```
+
+```{r}
+final_q1$SALTACI <- as.factor(final_q1$SALTACI)
+ggplot(final_q1, aes(x = SALTACI, y = LDL_HDL_ratio, color = COBCODBC, group = COBCODBC)) +
+  # geom_boxplot(position = position_dodge(width = 0.75)) +  # Boxplot for each level of DIETQ5
+  stat_summary(fun = "mean", geom = "point", size = 3) +  # Points for means
+  stat_summary(fun = "mean", geom = "line", aes(group = COBCODBC)) +  # Line connecting means
+  labs(title = "Interaction Plot: Categorical DIETQ5 and LDL/HDL Ratio by Country of Birth",
+       x = "SALTACI", 
+       y = "LDL/HDL Ratio") +
+  theme_bw()
+
+
+```
+
+### MILKFATU
+
+
+
+```{r}
+final_q1$MILKFATU <- as.factor(final_q1$MILKFATU)
+ggplot(final_q1, aes(x = MILKFATU, y = LDL_HDL_ratio, color = COBCODBC, group = COBCODBC)) +
+  # geom_boxplot(position = position_dodge(width = 0.75)) +  # Boxplot for each level of DIETQ5
+  stat_summary(fun = "mean", geom = "point", size = 3) +  # Points for means
+  stat_summary(fun = "mean", geom = "line", aes(group = COBCODBC)) +  # Line connecting means
+  labs(title = "Interaction Plot: Categorical DIETQ5 and LDL/HDL Ratio by Country of Birth",
+       x = "MILKFATU", 
+       y = "LDL/HDL Ratio") +
+  theme_bw()
+
+
+table(final_q1$MILKFATU,final_q1$COBCODBC )
+```
+
+### DIETRDI
+
+
+
+```{r}
+final_q1$DIETRDI <- as.factor(final_q1$DIETRDI)
+ggplot(final_q1, aes(x = DIETRDI, y = LDL_HDL_ratio, color = COBCODBC, group = COBCODBC)) +
+  # geom_boxplot(position = position_dodge(width = 0.75)) +  # Boxplot for each level of DIETQ5
+  stat_summary(fun = "mean", geom = "point", size = 3) +  # Points for means
+  stat_summary(fun = "mean", geom = "line", aes(group = COBCODBC)) +  # Line connecting means
+  labs(title = "Interaction Plot: Categorical DIETQ5 and LDL/HDL Ratio by Country of Birth",
+       x = "DIETRDI", 
+       y = "LDL/HDL Ratio") +
+  theme_bw()
+
+
+table(final_q1$MILKFATU,final_q1$COBCODBC )
+```
+
+
+
+### DIETQ1
+
+
+```{r}
+final_q1$DIETQ1 <- as.factor(final_q1$DIETQ1)
+ggplot(final_q1, aes(x = DIETQ1, y = LDL_HDL_ratio, color = COBCODBC, group = COBCODBC)) +
+  # geom_boxplot(position = position_dodge(width = 0.75)) +  # Boxplot for each level of DIETQ5
+  stat_summary(fun = "mean", geom = "point", size = 3) +  # Points for means
+  stat_summary(fun = "mean", geom = "line", aes(group = COBCODBC)) +  # Line connecting means
+  labs(title = "Interaction Plot: Categorical DIETQ5 and LDL/HDL Ratio by Country of Birth",
+       x = "DIETQ1", 
+       y = "LDL/HDL Ratio") +
+  theme_bw()
+```
+
+
+### DIETQ5
+
+
+
+```{r}
+ggplot(final_q1, aes(x = DIETQ5, y = LDL_HDL_ratio, color = COBCODBC)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE) + facet_wrap(~ COBCODBC, scales = "free_y") +
+  labs(title = "LDL/HDL Ratio against DIETQ5 and COBCODBC", x = "DIETQ5",y = "LDL/HDL Ratio") +
+  theme_bw()
+```
+
+
+
+### DIETQ8
+
+```{r}
+labels <- c("Australians", "Main English Speaking Countries", "Other")
+ggplot(final_q1, aes(x = DIETQ8, y = LDL_Expected, color = COBCODBC)) +
+  geom_point(position = 'jitter', alpha = 0.2) +
+  geom_smooth(method = "lm", se = FALSE) +  # Add regression lines for each group
+  labs(title = "Interaction Between Fruit Intake (DIETQ8) and Absolute LDL by Country of Birth",
+       x = "Fruit Intake (DIETQ8)",
+       y = "Absolute LDL") + facet_wrap(~ COBCODBC, scales = "free_y") +
+  theme_bw()+  # Change legend title
+  scale_color_manual(values = c("lightblue4", "tomato3", "palegreen4"), labels = labels) +
+  theme_bw()
+```
+
+
+```{r}
+labels <- c("Australians", "Main English Speaking Countries", "Other")
+ggplot(final_q1, aes(x = DIETQ8, y = LDL_HDL_ratio, color = COBCODBC)) +
+  geom_point(position = 'jitter', alpha = 0.2) +
+  geom_smooth(method = "lm", se = FALSE) +  # Add regression lines for each group
+  labs(title = "Interaction Between Fruit Intake (DIETQ8) and LDL/HDL Ratio by Country of Birth",
+       x = "Fruit Intake (DIETQ8)",
+       y = "LDL/HDL Ratio") + facet_wrap(~ COBCODBC, scales = "free_y") +
+  theme_bw()+  # Change legend title
+  scale_color_manual(values = c("lightblue4", "tomato3", "palegreen4"), labels = labels) +
+  theme_bw()
+```
+
+
+
+### DIETQ5 and DIETQ8
+
+
+```{r}
+# Heatmap showing the interaction between DIETQ5 and DIETQ8 on LDL/HDL ratio
+ggplot(final_q1, aes(x = DIETQ5, y = DIETQ8, fill = LDL_HDL_ratio)) +
+  geom_tile() +
+  facet_wrap(~COBCODBC) +  # Separate plots for each country
+  labs(title = "Heatmap of LDL/HDL Ratio Based on Vegetable and Fruit Intake",
+       x = "Vegetable Intake (DIETQ5)",
+       y = "Fruit Intake (DIETQ8)",
+       fill = "LDL/HDL Ratio") +
+  theme_bw()
+```
+
+
+## Linear Mixed Effects Model
+
+
+
+## All Interactions
+
+
+```{r}
+final_q1$DIETQ8 <- as.numeric(final_q1$DIETQ8 )
+final_q1$DIETQ5 <- as.numeric(final_q1$DIETQ5 )
+final_q1$DIETQ1 <- as.factor(final_q1$DIETQ1 )
+final_q1$SALTATI <- as.factor(final_q1$SALTATI )
+final_q1$SALTACI <- as.factor(final_q1$SALTACI )
+final_q1$MILKFATU <- as.factor(final_q1$MILKFATU )
+```
+
+
+```{r}
+model_ldl_hdl <- lmer(
+  LDL_Expected ~ +  
+    (DIETQ5 + DIETQ8 + MILKFATU  + DIETQ1 ) * COBCODBC + 
+    (1 | AGEB),  
+  data = final_q1
+)
+summary(model_ldl_hdl)
+```
+
+
+
+
+## Assumptions
+
+### Linearity
+
+```{r}
+plot(fitted(model_ldl_hdl), resid(model_ldl_hdl))
+abline(h = 0, col = "red")
+```
+
+### Normality
+
+CLT -> Normality is okay
+
+```{r}
+qqnorm(resid(model_ldl_hdl))
+qqline(resid(model_ldl_hdl), col = "red")
+```
+
+
+### Random effect distribution
+
+```{r}
+ranef_vals <- ranef(model_ldl_hdl)$AGEB[[1]]
+qqnorm(ranef_vals)
+qqline(ranef_vals, col = "red")
+hist(ranef_vals, breaks = 20, main = "Random Effects for AGEB", xlab = "Random Effects")
+```
+
+
+
+
+
+
+
+
+
+
+
+## Redo Analysis Using Absolute LDL
+
+
+
+```{r}
+model_ldl <- lmer(
+  LDL_Expected ~ +  
+    (DIETQ5 + DIETQ8 + MILKFATU + SALTATI + SALTACI  + DIETQ1) * COBCODBC + 
+    (1 | AGEB),  
+  data = final_q1
+)
+
+
+summary(model_ldl)
+```
+
+
+
+
+
+
+
+
+
+
+
+# RQ 2
+![](11.gif)
+
+```{r}
+data = tech_q2
+data$SMKSTAT <- as.factor(data$SMKSTAT)
+data$ALCUSUQ2 <- as.factor(data$ALCUSUQ2)
+data$ALCSTR01 <- as.factor(data$ALCSTR01)
+data$DIETRDI <- as.factor(data$DIETRDI)
+
+str(data$ALCUSUQ2)
+str(data$ALCSTR01)
+data
+```
+
+
+## Smoking
+
+```{r}
+data_clean1 <- data %>%
+  filter(!is.na(SYSTOL) & !is.na(DIASTOL) & !is.na(SMKSTAT) & !is.na(COBCODBC)  & 
+         !is.na(AGEB) & !is.na(SEX))
+```
+
+
+```{r}
+# SYSTOL
+
+data_clean1$SMKSTAT <- as.factor(data_clean1$SMKSTAT)
+systol_model1 <- lmer(
+  SYSTOL ~  (1 | AGEB) + (1 | SEX)  + SMKSTAT * COBCODBC, 
+  data = data_clean1
+)
+
+# 
+diastol_model1 <- lmer(
+  DIASTOL ~  (1 | AGEB) + (1 | SEX)  + SMKSTAT * COBCODBC, 
+  data = data_clean1
+)
+# Summaries
+summary(systol_model1)
+summary(diastol_model1)
+
+```
+
+
+
+
+```{r}
+data_clean2 <- data %>%
+  filter(!is.na(SYSTOL) & !is.na(DIASTOL) & !is.na(COBCODBC)  & !is.na(TOTPAC)  & !is.na(ALCWKLY) &
+         !is.na(AGEB) & !is.na(SEX) & !is.na(ALCUSUQ2) & !is.na(ALCSTR01)  & !is.na(PHDKGW2))
+
+
+data_clean2$TOTPAC_normalise = data_clean2$TOTPAC/data_clean2$PHDKGW2
+data_clean2$ALCWKLY_normalise = data_clean2$ALCWKLY/data_clean2$PHDKGW2
+```
+
+```{r}
+# Define labels for COBCODBC
+labels <- c("Australians", "Main English Speaking Countries", "Other")
+
+# Create the plot with relabeled legend and x-axis labels for SMKSTAT
+ggplot(data_clean2, aes(x = SMKSTAT, y = SYSTOL, color = COBCODBC, group = COBCODBC)) +
+  stat_summary(fun = "mean", geom = "point", size = 3) +  # Points for means
+  stat_summary(fun = "mean", geom = "line", aes(group = COBCODBC), size = 1) +  # Line connecting means
+  labs(title = "Interaction Plot: Smoking Status and SYSTOL by Country of Birth",
+       x = "Smoking Status", 
+       y = "SYSTOL",
+       color = "Country of Birth") +  # Change legend title
+  scale_x_discrete(labels = c(
+    "0" = "Not applicable",
+    "1" = "Current \n smoker daily",
+    "2" = "Current \n smoker weekly",
+    "3" = "Current \n smoker \n less than weekly",
+    "4" = "Ex-smoker",
+    "5" = "Never smoked"
+  )) +  # Custom x-axis labels for SMKSTAT
+  scale_color_manual(values = c("lightblue3", "tomato3", "palegreen4"), labels = labels) +
+  theme_bw()
+```
+
+
+
+## Alcohol
+
+
+```{r}
+hist(data$TOTPAC)
+```
+
+
+
+
+```{r}
+alcohol_mapping <- c(
+  "0" = 0,   # Not applicable
+  "1" = 365, # Every day
+  "2" = 260, # 5 to 6 days a week (approx. 5.5 * 52)
+  "3" = 208, # 3 to 4 days a week (approx. 4 * 52)
+  "4" = 104, # 1 to 2 days a week (approx. 2 * 52)
+  "5" = 36,  # 2 to 3 days a month (approx. 2.5 * 12)
+  "6" = 12,  # 1 day a month
+  "7" = 6,   # Less than once a month (approx. 0.5 * 12)
+  "8" = NA   # Not known
+)
+
+# Apply the mapping to convert ALCUSUQ2 to numeric
+data_clean2$ALCUSUQ2_numeric <- as.numeric(alcohol_mapping[as.character(data_clean2$ALCUSUQ2)])
+```
+
+
+```{r}
+# SYSTOL
+data_clean2$TOTPAC_normalise <- as.numeric(data_clean2$TOTPAC_normalise )
+data_clean2$ALCWKLY_normalise <- as.numeric(data_clean2$ALCWKLY_normalise )
+systol_model2 <- lmer(
+  SYSTOL ~  (1 | AGEB) + (1 | SEX) + TOTPAC_normalise * COBCODBC  + ALCWKLY_normalise * COBCODBC  , 
+  data = data_clean2
+)
+
+diastol_model2 <- lmer(
+  DIASTOL ~  (1 | AGEB) + (1 | SEX) + TOTPAC_normalise * COBCODBC  + ALCWKLY_normalise * COBCODBC, 
+  data = data_clean2
+)
+# Summaries
+summary(systol_model2)
+summary(diastol_model2)
+
+```
+
+
+
+## Exercise
+
+
+```{r}
+data_clean3 <- data %>%
+  filter(!is.na(SYSTOL) & !is.na(DIASTOL) & !is.na(EXREGUIC) & !is.na(COBCODBC)  & 
+         !is.na(AGEB) & !is.na(SEX)  & !is.na(EXREGUID)  & !is.na(EXFSRMNE) & !is.na(EXLWMBC) & !is.na(EXLWVBC)) %>% filter(EXREGUID %in% c(1,2)) %>% filter(EXREGUIC %in% c(1,2))
+
+table(data_clean3$EXREGUID)
+```
+
+```{r}
+hist(data_clean3$EXLWMBC)
+```
+
+
+```{r}
+systol_model3 <- lmer(
+  SYSTOL ~ EXREGUIC * COBCODBC + (1 | AGEB) + (1 | SEX)  + 
+  EXREGUID * COBCODBC + EXFSRMNE * COBCODBC + EXLWMBC * COBCODBC + EXLWVBC * COBCODBC, 
+  data = data_clean3
+)
+diastol_model3 <- lmer(
+  DIASTOL ~ EXREGUIC * COBCODBC + (1 | AGEB) + (1 | SEX)  + 
+  EXREGUID * COBCODBC + EXFSRMNE * COBCODBC + EXLWMBC * COBCODBC + EXLWVBC * COBCODBC, 
+  data = data_clean3
+)
+
+# Summaries
+summary(systol_model3)
+summary(diastol_model3)
+
+
+```
+
+
+
+
+```{r}
+# Define labels for COBCODBC
+labels <- c("Australians", "Main English Speaking Countries", "Other")
+
+# Create the plot with relabeled legend
+ggplot(data_clean3, aes(x = EXREGUID, y = SYSTOL, color = COBCODBC, group = COBCODBC)) +
+  stat_summary(fun = "mean", geom = "point", size = 3) +  # Points for means
+  stat_summary(fun = "mean", geom = "line", aes(group = COBCODBC), size = 1) +  # Line connecting means
+  labs(title = "Interaction Plot: Exercise Guidelines and SYSTOL by Country of Birth",
+       x = "Exercise Guidelines", 
+       y = "SYSTOL",
+       color = "Country of Birth") +  # Change legend title
+  scale_color_manual(values = c("lightblue3", "tomato3", "palegreen4"), labels = labels) +
+  theme_bw()
+```
+
+
+
+```{r}
+labels <- c("Australians", "Main English Speaking Countries", "Other")
+ggplot(data_clean3, aes(x = EXLWVBC, y = SYSTOL, color = COBCODBC)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm", se = FALSE) +  # Add regression lines for each group
+  labs(title = "Interaction Between Minutes of Vigorous Exercise and SYSTOL by Country of Birth",
+       x = "Minutes of Vigorous Exercise",
+       y = "SYSTOL") + facet_wrap(~ COBCODBC, scales = "free_y") +
+  theme_bw()+  # Change legend title
+  scale_color_manual(values = c("lightblue4", "tomato3", "palegreen4"), labels = labels) +
+  theme_bw()
+```
+
+
+
+
+```{r}
+ggplot(data_clean3, aes(x = EXREGUID, y = SYSTOL, color = COBCODBC, group = COBCODBC)) +
+  stat_summary(fun = "mean", geom = "point", size = 3) +  # Points for means
+  stat_summary(fun = "mean", geom = "line", aes(group = COBCODBC), size = 1) +  # Line connecting means
+  labs(title = "Interaction Plot: Exercise Guidelines and SYSTOL by Country of Birth",
+       x = "Exercise Guidelines", 
+       y = "SYSTOL",
+       color = "Country of Birth") +  # Change legend title
+  scale_x_discrete(labels = c("1" = "Met Guidelines", "2" = "Did Not Meet Guidelines")) +  # Custom x-axis labels for discrete scale
+  scale_color_manual(values = c("lightblue3", "tomato3", "palegreen4"), labels = labels) +
+  theme_bw()
+```
+:::
